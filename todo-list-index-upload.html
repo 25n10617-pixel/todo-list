@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 할 일 체크리스트</title>
+<style>
+:root{--bg:#f5f6fb;--paper:#fff;--ink:#24283b;--muted:#777f94;--line:#e7e9f1;--primary:#6658d3;--soft:#efedff;--green:#21865f;--red:#d65363}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,"Malgun Gothic",sans-serif;line-height:1.5}
+header{background:linear-gradient(120deg,#5548ba,#8376e7);color:white;padding:34px 20px 64px}.wrap{width:min(860px,100%);margin:auto}h1{font-size:clamp(28px,5vw,38px);margin:5px 0}header p{margin:0;color:#eeecff}main{width:min(860px,100%);padding:0 16px 40px;margin:-34px auto 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.stat,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px}.stat{padding:13px 16px}.stat span{display:block;color:var(--muted);font-size:13px}.stat strong{font-size:25px}.card{padding:18px;margin-bottom:14px}.card h2{font-size:17px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px}label{display:block;font-size:12px;color:var(--muted);font-weight:bold;margin-bottom:5px}input,select{width:100%;min-width:0;border:1px solid #dfe2ec;border-radius:10px;padding:11px;background:#fff;color:var(--ink);font:inherit}input:focus,select:focus{outline:3px solid #e8e5ff;border-color:var(--primary)}button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:bold;cursor:pointer}.add{display:block;margin:12px 0 0 auto;background:var(--primary);color:white}.add:hover{filter:brightness(.96)}
+.notice{min-height:20px;color:var(--green);font-size:13px;margin-top:8px}.bar{height:10px;background:#eeeef5;border-radius:20px;overflow:hidden}.bar>div{height:100%;width:0;background:linear-gradient(90deg,#7b70e5,#4bb98c);transition:width .2s}.progressline{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:7px}
+.listhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.filters{display:flex;gap:6px}.filter{background:#f0f1f7;color:#626b81;padding:7px 10px;font-size:12px}.filter.active{background:var(--soft);color:var(--primary)}.items{display:flex;flex-direction:column;gap:9px}.task{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:11px}.task input{width:18px;height:18px;accent-color:var(--green)}.task.done .name{text-decoration:line-through;color:#969dad}.name{font-weight:bold;overflow-wrap:anywhere}.meta{display:flex;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:11px;margin-top:3px}.tag{background:#f0f1f6;border-radius:20px;padding:2px 7px}.high{background:#fff0f0;color:var(--red)}.low{background:#eaf7f0;color:var(--green)}.del{background:#fff0f1;color:var(--red);font-size:12px;padding:7px 10px}.empty{text-align:center;padding:24px 10px;color:var(--muted);font-size:14px}.footer{text-align:center;color:var(--muted);font-size:11px;padding:5px}
+@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.grid .wide{grid-column:1/-1}.card{padding:15px}.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div style="font-size:12px;font-weight:bold;letter-spacing:.14em;opacity:.85">MY DAILY PLANNER</div><h1>오늘의 할 일</h1><p>해야 할 일을 적고 하나씩 완료해 보세요!</p></div></header>
+<main>
+  <section class="stats">
+    <div class="stat"><span>전체 할 일</span><strong id="totalCount">0개</strong></div>
+    <div class="stat"><span>완료한 일</span><strong id="doneCount">0개</strong></div>
+    <div class="stat"><span>남은 할 일</span><strong id="leftCount">0개</strong></div>
+  </section>
+  <section class="card">
+    <h2>새로운 할 일 추가</h2>
+    <div class="grid">
+      <div class="wide"><label for="taskInput">할 일</label><input id="taskInput" maxlength="80" placeholder="예: 수학 숙제 끝내기" autocomplete="off"></div>
+      <div><label for="dueInput">마감일</label><input id="dueInput" type="date"></div>
+      <div><label for="categoryInput">분류</label><select id="categoryInput"><option>학교</option><option>개인</option><option>집안일</option><option>기타</option></select></div>
+      <div><label for="priorityInput">중요도</label><select id="priorityInput"><option value="높음">높음</option><option value="보통" selected>보통</option><option value="낮음">낮음</option></select></div>
+    </div>
+    <button class="add" id="addButton" type="button" onclick="addTask()">＋ 할 일 추가</button>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+  </section>
+  <section class="card">
+    <div class="listhead"><h2 style="margin:0">진행 상황</h2><strong id="progressText" style="color:var(--primary)">0%</strong></div>
+    <div class="progressline"><span>완료율</span><span id="progressDetail">0개 완료 / 0개</span></div>
+    <div class="bar"><div id="progressBar"></div></div>
+  </section>
+  <section class="card">
+    <div class="listhead" style="margin-bottom:13px"><h2 style="margin:0">나의 할 일 목록</h2><div class="filters"><button type="button" class="filter active" data-filter="all" onclick="setFilter('all',this)">전체</button><button type="button" class="filter" data-filter="active" onclick="setFilter('active',this)">할 일</button><button type="button" class="filter" data-filter="done" onclick="setFilter('done',this)">완료</button></div></div>
+    <div class="items" id="taskList"><div class="empty">아직 등록한 할 일이 없어요.<br>위에서 첫 번째 할 일을 추가해 보세요!</div></div>
+  </section>
+  <div class="footer">기록은 이 브라우저에 자동 저장됩니다. 다른 기기와 자동으로 공유되지는 않습니다.</div>
+</main>
+<script>
+'use strict';
+var STORAGE_KEY = 'daily_todo_checklist_v3';
+var tasks = [];
+var currentFilter = 'all';
+var nextId = 1;
+function el(id){ return document.getElementById(id); }
+function todayString(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function safeText(value){ return String(value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function saveTasks(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+  catch(e){ el('notice').textContent='브라우저 저장은 제한되어 있지만, 현재 화면에서는 계속 사용할 수 있어요.'; }
+}
+function loadTasks(){
+  try { var raw=localStorage.getItem(STORAGE_KEY); var parsed=JSON.parse(raw||'[]'); if(Array.isArray(parsed)){tasks=parsed.filter(function(t){return t&&typeof t.title==='string';});} }
+  catch(e){ tasks=[]; }
+  tasks.forEach(function(t){ if(typeof t.id!=='number') t.id=nextId; nextId=Math.max(nextId,Number(t.id)+1); });
+}
+function addTask(){
+  var input=el('taskInput');
+  var title=input.value.trim();
+  if(!title){ el('notice').textContent='할 일을 먼저 입력해 주세요.'; input.focus(); return; }
+  var task={id:nextId++,title:title,due:el('dueInput').value,category:el('categoryInput').value,priority:el('priorityInput').value,done:false,createdAt:Date.now()};
+  tasks.push(task);
+  saveTasks();
+  input.value='';
+  currentFilter='all';
+  document.querySelectorAll('[data-filter]').forEach(function(b){b.classList.toggle('active',b.dataset.filter==='all');});
+  el('notice').textContent='“'+title+'” 할 일이 추가되었어요!';
+  renderTasks();
+  input.focus();
+}
+function toggleTask(id){ var t=tasks.find(function(x){return x.id===id;}); if(t){t.done=!t.done;saveTasks();renderTasks();} }
+function deleteTask(id){ var t=tasks.find(function(x){return x.id===id;}); if(!t)return; if(confirm('“'+t.title+'” 할 일을 삭제할까요?')){tasks=tasks.filter(function(x){return x.id!==id;});saveTasks();renderTasks();} }
+function setFilter(filter,button){currentFilter=filter;document.querySelectorAll('[data-filter]').forEach(function(b){b.classList.toggle('active',b===button);});renderTasks();}
+function renderTasks(){
+  var total=tasks.length, completed=tasks.filter(function(t){return t.done;}).length, left=total-completed, rate=total?Math.round(completed/total*100):0;
+  el('totalCount').textContent=total+'개'; el('doneCount').textContent=completed+'개'; el('leftCount').textContent=left+'개';
+  el('progressText').textContent=rate+'%'; el('progressDetail').textContent=completed+'개 완료 / '+total+'개'; el('progressBar').style.width=rate+'%';
+  var visible=tasks.filter(function(t){return currentFilter==='all'||(currentFilter==='active'&&!t.done)||(currentFilter==='done'&&t.done);});
+  visible.sort(function(a,b){return Number(a.done)-Number(b.done)||(a.due||'9999-99-99').localeCompare(b.due||'9999-99-99')||(b.createdAt||0)-(a.createdAt||0);});
+  if(!visible.length){el('taskList').innerHTML='<div class="empty">'+(total?'해당하는 할 일이 없어요.':'아직 등록한 할 일이 없어요.<br>위에서 첫 번째 할 일을 추가해 보세요!')+'</div>';return;}
+  el('taskList').innerHTML=visible.map(function(t){
+    var late=!t.done&&t.due&&t.due<todayString();
+    var priority=t.priority==='높음'?'high':(t.priority==='낮음'?'low':'');
+    return '<article class="task '+(t.done?'done':'')+'"><input type="checkbox" aria-label="완료" '+(t.done?'checked':'')+' onchange="toggleTask('+Number(t.id)+')"><div><div class="name">'+safeText(t.title)+'</div><div class="meta"><span class="tag">'+safeText(t.category||'기타')+'</span><span class="tag '+priority+'">중요도 '+safeText(t.priority||'보통')+'</span><span>'+(t.due?'마감 '+safeText(t.due):'마감일 없음')+'</span>'+(late?'<span class="tag high">기한 지남</span>':'')+'</div></div><button class="del" type="button" onclick="deleteTask('+Number(t.id)+')">삭제</button></article>';
+  }).join('');
+}
+el('dueInput').value=todayString();
+el('taskInput').addEventListener('keydown',function(event){if(event.key==='Enter'){event.preventDefault();addTask();}});
+loadTasks();
+renderTasks();
+</script>
+</body>
+</html>
